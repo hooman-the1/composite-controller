@@ -5,6 +5,18 @@ import { ControllerClass } from "./controller.class.js";
 
 export function Controller(endpoint: string) {
     const stringNodes = convertEndpointToArray(endpoint);
+    const existedNodes = (container.isBound(ControllerType.Conductor))
+        ? container.getAll<Conductor>(ControllerType.Conductor)
+        : []
+        const existedStringNodes = (existedNodes.length !== 0)
+        ? existedNodes.map((element: Conductor) => element.name)
+        : []
+    if (existedStringNodes.length !== 0) {
+        for (let i = 0; i < existedStringNodes.length; i++) {
+            if (stringNodes[0] != existedStringNodes[i]) break;
+            stringNodes.shift();
+        }
+    }
     createNode(stringNodes);
     addChildNodes();
 }
@@ -24,9 +36,9 @@ function createNode(nodes: string[]): void {
     }
 }
 
-function addChildNodes(){
+function addChildNodes() {
     const nodes = container.getAll<Conductor>(ControllerType.Conductor);
-    for(let i = 0; i < nodes.length - 1; i++){
+    for (let i = 0; i < nodes.length - 1; i++) {
         nodes[i].add(nodes[i + 1]);
     }
 }
