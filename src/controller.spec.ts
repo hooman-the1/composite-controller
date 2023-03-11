@@ -11,43 +11,61 @@ const controllerDecorator = Controller;
 
 describe("Controller decorator", () => {
     const endPoint = "/v1/courses/single";
-    const nodesArray = ["v1", "courses", "single"];
+    let conductors: Conductor[];
+    let v1: Conductor;
+    let v1Courses: Conductor;
+    let v1CoursesSingle: Conductor;
+    let v2: Conductor;
+    let v2Courses: Conductor;
+    let v2Tests: Conductor;
+    let v3: Conductor;
+    let v3Test1: Conductor;
+    let v3Courses: Conductor;
+    let v3Test3: Conductor;
 
     beforeEach(() => {
+        controllerDecorator("/v1");
+        controllerDecorator("/v1/courses");
+        controllerDecorator("/v2/courses");
+        controllerDecorator("/v2/tests");
+        controllerDecorator("/v3/test1/courses/test3");
+        controllerDecorator("/v3/test1");
+        controllerDecorator(endPoint);
+        conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
+        v1 = conductors.find(element => element.name === "v1")!;
+        v1Courses = v1?.children[0];
+        v1CoursesSingle = v1Courses?.children[0];
+        v2 = conductors.find(element => element.name === "v2")!;
+        v2Courses = v2?.children.find(element => element.name === "courses")!;
+        v2Tests = v2?.children.find(element => element.name === "tests")!;
+        v3 = conductors.find(element => element.name === "v3")!;
+        v3Test1 = v3?.children[0];
+        v3Courses = v3Test1?.children[0];
+        v3Test3 = v3Courses?.children[0];
     })
 
     afterEach(() => {
         container.unbindAll();
     })
 
-    // it(`should create 3 nodes with their names based on nodes array elements`, () => {
-    //     controllerDecorator(endPoint);
-    //     expect(container.getAll<Conductor>(ControllerType.Conductor).length).toBe(3);
-    // })
+    it(`should create all nodes in tree structure 
+        and ignore nodes that already created`, () => {
+        expect(conductors.length).toEqual(10);
+    })
 
-    // it(`should create tree by adding child instance to its parent children property`, () => {
-    //     controllerDecorator(endPoint);
-    //     const conductors = container.getAll<Conductor>(ControllerType.Conductor);
-    //     expect(conductors[0].children[0]).toEqual(conductors[1]);
-    //     expect(conductors[0].children[0].name).toBe("courses");
-    //     expect(conductors[1].children[0]).toEqual(conductors[2]);
-    //     expect(conductors[1].children[0].name).toBe("single");
-    //     expect(conductors[2].children.length).toBe(0);
-    // })
-
-    it(`should check if some of the node of tree exists then
-         just create remain nodes`, () => {
-        container.bind<Conductor>(ControllerType.Conductor)
-            .toDynamicValue(function () {
-                return new ControllerClass("v1");
-            }).inSingletonScope();
-        container.bind<Conductor>(ControllerType.Conductor)
-            .toDynamicValue(function () {
-                return new ControllerClass("courses");
-            }).inSingletonScope();
-        controllerDecorator(endPoint);
-        const conductors = container.getAll<Conductor>(ControllerType.Conductor);
-        expect(conductors.length).toEqual(3);
-
+    it(`should add children nodes in "children" property of nodes`, () => {
+        console.log(v1Courses.children)
+        expect(v1.children.length).toEqual(1);
+        expect(v1Courses.children.length).toEqual(1);
+        expect(v1CoursesSingle.children.length).toEqual(0);
+        
+        expect(v2.children.length).toEqual(2);
+        expect(v2Courses.children.length).toEqual(0);
+        expect(v2Tests.children.length).toEqual(0); 
+        
+        expect(v3.children.length).toEqual(1);
+        expect(v3Test1.children.length).toEqual(1);
+        expect(v3Courses.children.length).toEqual(1);
+        expect(v3Test3.children.length).toEqual(0);
     })
 })
