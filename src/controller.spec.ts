@@ -54,7 +54,7 @@ describe("Controller decorator", () => {
     })
 
     it(`should add children nodes in "children" property of nodes`, () => {
-        console.log(v1Courses.children)
+        console.log(v1.children)
         expect(v1.children.length).toEqual(1);
         expect(v1Courses.children.length).toEqual(1);
         expect(v1CoursesSingle.children.length).toEqual(0);

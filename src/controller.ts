@@ -7,11 +7,15 @@ type Node = { name: string; depth: number; }
 
 export function Controller(endpoint: string) {
     let nodes = createArrayOfNodesWithoutExistedOnes(endpoint);
-    createNode(nodes);
-    addChildNodes(endpoint);
+    try {
+        createNode(nodes);
+        addChildNodes(endpoint);
+    } catch (error) {
+        return error;
+    }
 }
 
-function createArrayOfNodesWithoutExistedOnes(endpoint: string) {
+function createArrayOfNodesWithoutExistedOnes(endpoint: string): Node[] {
     let nodes = convertEndpointToArray(endpoint);
     const existedNodes = (container.isBound(ControllerType.Conductor))
         ? createStringArrayOfExistedNodes()
@@ -36,26 +40,27 @@ function convertEndpointToArray(endpoint: string): Node[] {
     return modifiedNodesArray;
 }
 
-function createNode(nodes: Node[]): void {
-    for (let node of nodes) {
-        container.bind<Conductor>(ControllerType.Conductor)
-            .toDynamicValue(function () {
-                return new ControllerClass(node.name, node.depth);
-            }).inSingletonScope();
+function createNode(nodes: Node[]): void | Error {
+    try {
+        for (let node of nodes) {
+            container.bind<Conductor>(ControllerType.Conductor)
+                .toDynamicValue(function () {
+                    return new ControllerClass(node.name, node.depth);
+                }).inSingletonScope();
+        }
+    } catch (error) {
+        throw new Error("can't create endpoint nodes")
     }
 }
 
 function addChildNodes(endPoint: string): void {
     const nodesArray = convertEndpointToArray(endPoint);
     const nodes = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
-    for(let i = 0; i < nodesArray.length - 2; i++){
+    for (let i = 0; i < nodesArray.length - 1; i++) {
         const levelNodesNames = nodes.filter(node => node.depth === i).map(node => node.name);
-        if(!levelNodesNames.includes(nodes[i].name)) break;
-        if(!nodes[i].children.includes(nodes[i + 1])) nodes[i].addChildren(nodes[i+1])   
+        if (!levelNodesNames.includes(nodes[i].name)) throw new Error("can't create endpoint tree");
+        if (!nodes[i].children.includes(nodes[i + 1])) nodes[i].addChildren(nodes[i + 1])
     }
-
-
-
     // for (let i = 0; i < nodes.length - 1; i++) {
     //     if (!nodes[i].children.includes(nodes[i + 1])) nodes[i].addChildren(nodes[i + 1]);
     // }
