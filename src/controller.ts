@@ -56,7 +56,19 @@ function createNode(nodes: Node[]): void | Error {
 function addChildNodes(endPoint: string): void {
     const nodesArray = convertEndpointToArray(endPoint);
     const nodes = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
+    const firstLevelNodes = nodes.filter(node => node.depth === 0);
+    const node = firstLevelNodes.find(firstLevelNode => firstLevelNode.name === nodesArray[0].name);
+    const child = nodes.filter(node => node.depth === 1).find(node => node.name === nodesArray[1].name);
+    let numerator = 1;
+    while(numerator <= nodesArray.length){
+
+    }
     for (let i = 0; i < nodesArray.length - 1; i++) {
+        
+
+
+
+
         const levelNodesNames = nodes.filter(node => node.depth === i).map(node => node.name);
         if (!levelNodesNames.includes(nodes[i].name)) throw new Error("can't create endpoint tree");
         if (!nodes[i].children.includes(nodes[i + 1])) nodes[i].addChildren(nodes[i + 1])
