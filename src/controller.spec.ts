@@ -23,16 +23,6 @@ describe("Controller decorator", () => {
   let v3Test3: Conductor;
 
   beforeEach(() => {
-    controllerDecorator("/v1");
-    controllerDecorator("/v1/courses");
-    controllerDecorator("/v2/courses");
-    controllerDecorator("/v2/tests");
-    controllerDecorator("/v3/test1/courses/test3");
-    controllerDecorator("/v3/test1");
-    controllerDecorator(endPoint);
-    conductors = container
-      .getAll<Conductor>(ControllerType.Conductor)
-      .sort((a, b) => a.depth - b.depth);
     // v1 = conductors.find((element) => element.name === "v1")!;
     // v1Courses = v1?.children[0];
     // v1CoursesSingle = v1Courses?.children[0];
@@ -51,40 +41,89 @@ describe("Controller decorator", () => {
 
   it(`should create all nodes in tree structure 
         and ignore nodes that already created`, () => {
+    controllerDecorator("/v1");
+    controllerDecorator("/v1/courses");
+    controllerDecorator("/v2/courses");
+    controllerDecorator("/v2/tests");
+    controllerDecorator("/v3/test1/courses/test3");
+    controllerDecorator("/v3/test1");
+    controllerDecorator(endPoint);
+    conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
     expect(conductors.length).toEqual(10);
   });
 
   it(`should add children properly 
-        when a completely new branch create`, () => {
+        when an existed endpoint add again or 
+        completely new endpoint branch add`, () => {
     controllerDecorator("v4/video/courses/single");
-    conductors = container
-      .getAll<Conductor>(ControllerType.Conductor)
-      .sort((a, b) => a.depth - b.depth);
+    controllerDecorator("v4/video/courses/single");
+    conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
     const v4 = conductors.find((element) => element.name === "v4")!;
     const v4Video = v4?.children.find((element) => element.name === "video")!;
     const v4Courses = v4Video?.children.find((element) => element.name === "courses")!;
     const v4Single = v4Courses?.children.find((element) => element.name === "single")!;
 
     expect(v4.children.length).toEqual(1);
+    expect(v4.children[0].name).toEqual("video");
     expect(v4Video.children.length).toEqual(1);
+    expect(v4Video.children[0].name).toEqual("courses");
     expect(v4Courses.children.length).toEqual(1);
+    expect(v4Courses.children[0].name).toEqual("single");
     expect(v4Single.children.length).toEqual(0);
   });
+
+  it(`should add children properly 
+        when an endpoint add that 
+        some part of it already added`, () => {
+    controllerDecorator("v4/video");
+    controllerDecorator("v4/video/courses/single");
+    controllerDecorator("v4/video/courses");
+    conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
+    const v4 = conductors.find((element) => element.name === "v4")!;
+    const v4Video = v4?.children.find((element) => element.name === "video")!;
+    const v4Courses = v4Video?.children.find((element) => element.name === "courses")!;
+    const v4Single = v4Courses?.children.find((element) => element.name === "single")!;
+
+    expect(v4.children.length).toEqual(1);
+    expect(v4.children[0].name).toEqual("video");
+    expect(v4Video.children.length).toEqual(1);
+    expect(v4Video.children[0].name).toEqual("courses");
+    expect(v4Courses.children.length).toEqual(1);
+    expect(v4Courses.children[0].name).toEqual("single");
+    expect(v4Single.children.length).toEqual(0);
+  });
+  it(`should add children nodes in "children" property of nodes`, () => {
+    controllerDecorator("/v1");
+    controllerDecorator("/v1/courses");
+    controllerDecorator("/v2/courses");
+    controllerDecorator("/v2/tests");
+    controllerDecorator("/v3/test1/courses/test3");
+    controllerDecorator("/v3/test1");
+    controllerDecorator(endPoint);
+    conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
+
+      v1 = conductors.find((element) => element.name === "v1")!;
+      v1Courses = v1?.children[0];
+      v1CoursesSingle = v1Courses?.children[0];
+      v2 = conductors.find((element) => element.name === "v2")!;
+      v2Courses = v2?.children.find((element) => element.name === "courses")!;
+      v2Tests = v2?.children.find((element) => element.name === "tests")!;
+      v3 = conductors.find((element) => element.name === "v3")!;
+      v3Test1 = v3?.children[0];
+      v3Courses = v3Test1?.children[0];
+      v3Test3 = v3Courses?.children[0];
+      expect(v1.children.length).toEqual(1);
+      expect(v1Courses.children.length).toEqual(1);
+      expect(v1CoursesSingle.children.length).toEqual(0);
+  
+      expect(v2.children.length).toEqual(2);
+      expect(v2Courses.children.length).toEqual(0);
+      expect(v2Tests.children.length).toEqual(0);
+  
+      expect(v3.children.length).toEqual(1);
+      expect(v3Test1.children.length).toEqual(1);
+      expect(v3Courses.children.length).toEqual(1);
+      expect(v3Test3.children.length).toEqual(0);
+  })
 });
 
-// it(`should add children nodes in "children" property of nodes`, () => {
-//     console.log(v1.children)
-//     expect(v1.children.length).toEqual(1);
-//     expect(v1Courses.children.length).toEqual(1);
-//     expect(v1CoursesSingle.children.length).toEqual(0);
-
-//     expect(v2.children.length).toEqual(2);
-//     expect(v2Courses.children.length).toEqual(0);
-//     expect(v2Tests.children.length).toEqual(0);
-
-//     expect(v3.children.length).toEqual(1);
-//     expect(v3Test1.children.length).toEqual(1);
-//     expect(v3Courses.children.length).toEqual(1);
-//     expect(v3Test3.children.length).toEqual(0);
-// })
-// })
