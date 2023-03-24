@@ -4,7 +4,7 @@
   "description": "RestAPI controller module using composite design pattern for structure and chain of responsibility design pattern",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest --no-watchAll --runInBand"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",

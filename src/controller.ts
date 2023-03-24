@@ -5,7 +5,7 @@ import { ControllerClass } from "./controller.class.js";
 
 type Node = { name: string; depth: number };
 
-export async function Controller(endPoint: string) {
+export function Controller(endPoint: string) {
   let nodes = createArrayOfNodesWithoutExistedOnes(endPoint);
   createNodeTree(nodes, endPoint);
 }
@@ -15,7 +15,7 @@ function createArrayOfNodesWithoutExistedOnes(endPoint: string): Node[] {
   const existedNodes = container.isBound(ControllerType.Conductor) ? createStringArrayOfExistedNodes() : [];
   if (existedNodes.length !== 0) nodes = removeExistedNodesFromNodesThatShouldCreate(existedNodes, nodes);
   return nodes;
-}
+} 
 
 function removeExistedNodesFromNodesThatShouldCreate(existedNodes: Node[], stringNodes: Node[]): Node[] {
   for (let i = 0; i < existedNodes.length; i++) {
@@ -36,40 +36,40 @@ function convertEndpointToArray(endPoint: string): Node[] {
 }
 
 function createNodeTree(nodes: Node[], endPoint: string): void | Error {
-  try {
-    createNodTreeTryBlock(nodes, endPoint);
-  } catch (error) {
-    throw new Error("can't create endpoint nodes");
-  }
-}
-
-function createNodTreeTryBlock(nodes: Node[], endPoint: string) {
   let childConductor: Conductor;
   for (let i = nodes.length - 1; i >= 0; i--) {
     const conductor = new ControllerClass(nodes[i].name, nodes[i].depth);
-    container
-      .bind<Conductor>(ControllerType.Conductor)
-      .toDynamicValue(function () {
+    container.bind<Conductor>(ControllerType.Conductor).toDynamicValue(function () {
         if (i !== nodes.length - 1) conductor.addChildren(childConductor);
-        childConductor = conductor;
+        childConductor = conductor;  
         return conductor;
       })
       .inSingletonScope();
-  }
+  }   
+  const parentConductor = findLastExistedEndPoint(nodes, endPoint)
+  if(parentConductor !== null) parentConductor.addChildren(childConductor!);
+} 
+    
+function findLastExistedEndPoint(nodes: Node[], endPoint: string): Conductor | null{
   const endPointsArray = convertEndpointToArray(endPoint);
-  if(nodes.length === 0) return
+  if(nodes.length === 0 || nodes[0].depth === 0) return null
   const depthForAddChild = nodes[0].depth - 1;
-  if(depthForAddChild === -1) return
-  const conductors = container.getAll<Conductor>(ControllerType.Conductor);
-  let parentConductor = conductors
-      .find((element) => element.depth === 0 
-        && element.name === endPointsArray[0].name)!;
+  return scanRelatedTreeDownward(endPointsArray, depthForAddChild)
+}
+
+function scanRelatedTreeDownward(endPointsArray: Node[], depthForAddChild: number): Conductor{
+  let parentConductor = findRootEndpoint(endPointsArray)
   let i = 1
   while(parentConductor.depth < depthForAddChild){
     parentConductor = parentConductor.children.find((element) => element.name === endPointsArray[i].name)!
     i ++;
   }
-  parentConductor.addChildren(childConductor!);
+  return parentConductor;
+}
+
+function findRootEndpoint(endPointsArray: Node[]): Conductor{
+  const conductors = container.getAll<Conductor>(ControllerType.Conductor);
+  return conductors.find((element) => element.depth === 0 && element.name === endPointsArray[0].name)!;
 }
 
 function createStringArrayOfExistedNodes(): Node[] {

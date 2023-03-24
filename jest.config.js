@@ -3,6 +3,8 @@ const config = {
     globals: {
         'ts-jest': {
             useESM: true,
+            isolatedModules: true,
+            testEnvironment: "node"
         },
     },
     moduleNameMapper: {
