@@ -20,7 +20,7 @@ abstract class ControllerBase implements Conductor {
 }
 
 @injectable()
-export class ControllerClass extends ControllerBase {
+export class Controller extends ControllerBase {
     constructor(public name: string, public depth: number){
         super();
     }

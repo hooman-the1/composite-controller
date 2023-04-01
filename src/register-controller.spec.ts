@@ -1,12 +1,15 @@
 import "reflect-metadata";
-import { ControllerClass } from "./controller.class.js";
+import { Controller } from "./controller.class.js";
 import { Conductor } from "./controller.interface.js";
-import { Controller } from "./controller.js";
+import { registerController } from "./register-controller.js";
 import { ControllerType } from "./injector/injector-types.js";
 import { container } from "./injector/injector.js";
+import { EndPointStore } from "./endpoint-repository.interface.js";
 
 jest.mock("./controller.class");
-const controllerDecorator = Controller;
+jest.mock("./endpoint-repository");
+const controllerDecorator = registerController;
+const endPointRepo: EndPointStore = container.get<EndPointStore>(ControllerType.EndPointStore);
 
 describe("Controller decorator", () => {
   const endPoint = "/v1/courses/single";
@@ -15,6 +18,7 @@ describe("Controller decorator", () => {
 
   afterEach(() => {
     container.unbindAll();
+    endPointRepo.clear();
   });
 
   it(`should create all nodes in tree structure 
@@ -57,17 +61,35 @@ describe("Controller decorator", () => {
     expect(v1Courses.children.length).toEqual(1);
     expect(v1Courses.children).toEqual([v1CoursesSingle]);
     expect(v1CoursesSingle.children.length).toEqual(0);
-    
+
     expect(v2.children.length).toEqual(2);
     expect(v2.children).toEqual([v2Courses, v2Tests]);
     expect(v2Courses.children.length).toEqual(0);
     expect(v2Tests.children.length).toEqual(0);
-    
+
     expect(v3.children.length).toEqual(1);
     expect(v3.children).toEqual([v3Test1]);
     expect(v3Test1.children.length).toEqual(1);
     expect(v3Test1Courses.children.length).toEqual(1);
     expect(v3Test1.children).toEqual([v3Test1Courses]);
     expect(v3Test1CoursesTest3.children.length).toEqual(0);
+  });
+
+  it(`should throw an error with text
+      "duplicate endpoint", when 2 exact same endpoint added`, () => {
+    controllerDecorator("/v40/test1/courses/test3");
+
+    expect(() => controllerDecorator("v40/test1/courses/test3")).toThrow("duplicate endpoint");
+  });
+
+  it(`should treat empty or "/" endpoint 
+      as root of all other endpoints`, () => {
+    controllerDecorator("/v40/test1/courses/test3");
+    controllerDecorator("");
+    conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
+    const root = conductors.find((element) => element.name === "")!;
+    const rootV40 = conductors.find((element) => element.name === "v40")!;
+    expect(root.children.length).toEqual(1);
+    expect(root.children).toEqual([rootV40]);
   });
 });

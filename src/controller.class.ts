@@ -9,7 +9,7 @@ abstract class ControllerBase implements Conductor {
     depth: number = 0;
 
     addChildren(controller: Conductor): Error | void {
-        throw new Error("This is not a composite endpoint")
+        // throw new Error("This is not a composite endpoint")
     };
 
     addDepthLevel(depth: number): void {
@@ -19,13 +19,13 @@ abstract class ControllerBase implements Conductor {
 }
 
 @injectable()
-export class ControllerClass extends ControllerBase {
+export class Controller extends ControllerBase {
     constructor(public name: string, public depth: number){
         super();
     }
 
     addChildren(controller: Conductor): void | Error {
-        this.children.push(controller);        
+        // this.children.push(controller);        
     }
 }
 
