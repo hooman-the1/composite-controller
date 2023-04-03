@@ -32,18 +32,20 @@ describe("Controller decorator", () => {
     controllerDecorator("/v3");
     controllerDecorator(endPoint);
     conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
-    expect(conductors.length).toEqual(10);
+    expect(conductors.length).toEqual(11);
   });
 
   it(`should add children nodes in "children" property of nodes`, () => {
     controllerDecorator("/v1");
-    controllerDecorator("/v1/courses");
+    controllerDecorator("v1/courses");
     controllerDecorator("/v2/courses");
     controllerDecorator("/v2/tests");
     controllerDecorator("/v3/test1/courses/test3");
     controllerDecorator("/v3/test1");
     controllerDecorator(endPoint);
     conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
+
+    const root = conductors.find((element) => element.name === "")!;
 
     v1 = conductors.find((element) => element.name === "v1")!;
     v1Courses = v1?.children[0];
@@ -55,6 +57,9 @@ describe("Controller decorator", () => {
     v3Test1 = v3?.children[0];
     v3Test1Courses = v3Test1?.children[0];
     v3Test1CoursesTest3 = v3Test1Courses?.children[0];
+
+    expect(root.children.length).toEqual(3);
+    expect(root.children).toEqual([v1, v2, v3]);
 
     expect(v1.children.length).toEqual(1);
     expect(v1.children).toEqual([v1Courses]);
@@ -82,14 +87,38 @@ describe("Controller decorator", () => {
     expect(() => controllerDecorator("v40/test1/courses/test3")).toThrow("duplicate endpoint");
   });
 
+  it(`should throw an error with text
+      "duplicate endpoint", when "" and "/" as 
+      seperate endpoints added`, () => {
+    controllerDecorator("/");
+
+    expect(() => controllerDecorator("")).toThrow("duplicate endpoint");
+  });
+
   it(`should treat empty or "/" endpoint 
       as root of all other endpoints`, () => {
     controllerDecorator("/v40/test1/courses/test3");
-    controllerDecorator("");
+    controllerDecorator("/");
     conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
     const root = conductors.find((element) => element.name === "")!;
     const rootV40 = conductors.find((element) => element.name === "v40")!;
     expect(root.children.length).toEqual(1);
     expect(root.children).toEqual([rootV40]);
+  });
+
+  it(`should ignore query params
+      and treat endpoints with different query params 
+      as same endpoints`, () => {
+    controllerDecorator("/v40?t=10");
+    
+    expect(() => controllerDecorator("/v40?t=20")).toThrow("duplicate endpoint");
+  });
+
+  it(`should ignore route params
+      and treat endpoints with different route params 
+      as same endpoints`, () => {
+    controllerDecorator("/v40/:test1/etc");
+    
+    expect(() => controllerDecorator("/v40/:test2/etc")).toThrow("duplicate endpoint");
   });
 });

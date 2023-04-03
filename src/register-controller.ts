@@ -9,15 +9,24 @@ type Node = { name: string; depth: number };
 const endPointRepo: EndPointStore = container.get<EndPointStore>(ControllerType.EndPointStore);
 
 export function registerController(endPoint: string) {
-  if(endPoint.length > 0 && endPoint.charAt(0) === "/") endPoint = endPoint.substring(1);  
+  endPoint = modifyEndPoint(endPoint);
   if(endPointRepo.check(endPoint)) throw new Error("duplicate endpoint")
   let nodes: Node[] = createArrayOfNodesWithoutExistedOnes(endPoint);
   createNodeTree(nodes, endPoint);
   endPointRepo.add(endPoint);
 }
 
+function modifyEndPoint(endPoint: string): string{
+  endPoint = endPoint.trim();
+  if(endPoint.charAt(0) !== "/") endPoint = "/" + endPoint;
+  endPoint = endPoint.replace(/\?.*/, "");
+  endPoint = endPoint.replace(/\:.*?\//, ":/");
+  return endPoint;
+}
+
 function createArrayOfNodesWithoutExistedOnes(endPoint: string): Node[] {
-  let nodes: Node[] = convertEndpointToArray(endPoint);
+  if(endPoint === "/") endPoint = "";
+  let nodes: Node[] = convertEndpointToArray(endPoint); 
   const existedNodes: Node[] = container.isBound(ControllerType.Conductor) ? createStringArrayOfExistedNodes() : [];
   if (existedNodes.length !== 0) nodes = removeExistedNodesFromNodesThatShouldCreate(existedNodes, nodes);
   return nodes;
@@ -34,7 +43,6 @@ function removeExistedNodesFromNodesThatShouldCreate(existedNodes: Node[], strin
 
 function convertEndpointToArray(endPoint: string): Node[] {
   const nodesArray: string[] = endPoint.split("/");
-  // if (nodesArray[0] === "") nodesArray.shift();
   const modifiedNodesArray: Node[] = nodesArray.map((element, index) => {
     return { name: element, depth: index };
   });
