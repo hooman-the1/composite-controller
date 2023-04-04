@@ -2,7 +2,6 @@ import { injectable } from "inversify";
 import { Conductor } from "../controller.interface";
 
 
-@injectable()
 abstract class ControllerBase implements Conductor {
 
     children: Conductor[] = [];
@@ -11,10 +10,6 @@ abstract class ControllerBase implements Conductor {
 
     addChildren(controller: Conductor): Error | void {
         throw new Error("This is not a composite endpoint")
-    };
-
-    addDepthLevel(depth: number): void {
-        this.depth = depth;
     };
 
 }
