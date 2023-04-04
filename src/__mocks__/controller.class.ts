@@ -7,10 +7,15 @@ abstract class ControllerBase implements Conductor {
     children: Conductor[] = [];
     name: string = "";
     depth: number = 0;
+    parent: Conductor | null = null;
 
     addChildren(controller: Conductor): Error | void {
         throw new Error("This is not a composite endpoint")
     };
+
+    addParent(controller: Conductor): void {
+        this.parent = controller;
+    }
 
 }
 

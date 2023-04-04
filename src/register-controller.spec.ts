@@ -80,6 +80,40 @@ describe("Controller decorator", () => {
     expect(v3Test1CoursesTest3.children.length).toEqual(0);
   });
 
+  it(`should add parent nodes in "parent" property of nodes`, () => {
+    controllerDecorator("/v1");
+    controllerDecorator("v1/courses");
+    controllerDecorator("/v2/courses");
+    controllerDecorator("/v2/tests");
+    controllerDecorator("/v3/test1/courses/test3");
+    controllerDecorator("/v3/test1");
+    controllerDecorator(endPoint);
+    conductors = container.getAll<Conductor>(ControllerType.Conductor).sort((a, b) => a.depth - b.depth);
+
+    const root = conductors.find((element) => element.name === "")!;
+
+    v1 = conductors.find((element) => element.name === "v1")!;
+    v1Courses = v1?.children[0];
+    v1CoursesSingle = v1Courses?.children[0];
+    v2 = conductors.find((element) => element.name === "v2")!;
+    v2Courses = v2?.children.find((element) => element.name === "courses")!;
+    v2Tests = v2?.children.find((element) => element.name === "tests")!;
+    v3 = conductors.find((element) => element.name === "v3")!;
+    v3Test1 = v3?.children[0];
+    v3Test1Courses = v3Test1?.children[0];
+    v3Test1CoursesTest3 = v3Test1Courses?.children[0];
+
+    expect(root.parent).toEqual(null);
+    expect(v1.parent).toEqual(root);
+    expect(v1Courses.parent).toEqual(v1);
+    expect(v2.parent).toEqual(root);
+    expect(v2Courses.parent).toEqual(v2);
+    expect(v3.parent).toEqual(root);
+    expect(v3Test1.parent).toEqual(v3);
+    expect(v3Test1Courses.parent).toEqual(v3Test1);
+    expect(v3Test1CoursesTest3.parent).toEqual(v3Test1Courses);
+  });
+
   it(`should throw an error with text
       "duplicate endpoint", when 2 exact same endpoint added`, () => {
     controllerDecorator("/v40/test1/courses/test3");
